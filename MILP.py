@@ -24,7 +24,7 @@ jobs = range(1,len(overview)+1)
 
 prob = LpProblem("FJSSP", LpMinimize) # problem 
 
-routing = LpVariable.dicts('routing', (i for i in data.keys()), cat = 'Binary')
+routing = LpVariable.dicts('routing', (i for i in data.keys()),0,1,LpBinary)
 
 delta = LpVariable("delta",None,None,LpContinuous)  # delta --> to be minimized
 
