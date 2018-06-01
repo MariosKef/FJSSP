@@ -10,6 +10,8 @@ overview is a 'number-of-jobs' x 2 array consisting of a list of operations and 
 data is a dictionary of the form {(job_number, process_number, machine_number) : processing_time}, which carries the 
 available data
 
+prec is a list with entries of type ((job_num, proc_num, machine),(other job_num, other proc_num, same machine))
+
 d is a list of job due dates
 
 @author: marios
