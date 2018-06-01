@@ -22,9 +22,16 @@ import numpy as np
 
 jobs = range(1,len(overview)+1)
 
-prob = LpProblem("FJSSP", LpMinimize) # problem 
+## -- problem  
+
+prob = LpProblem("FJSSP", LpMinimize) 
+
+
+## -- (decision) variables 
 
 routing = LpVariable.dicts('routing', (i for i in data.keys()),0,1,LpBinary)
+
+preced = LpVariable.dicts('different-job precedence', (i for i in prec),0,1,LpBinary)
 
 delta = LpVariable("delta",None,None,LpContinuous)  # delta --> to be minimized
 
@@ -34,14 +41,6 @@ C = LpVariable.dicts("Completion time of process",0,None,LpInteger)
 
 Comp = LpVariable.dicts("Job completion times",0,None,LpInteger)
 
-
-
-
-## ---- Here enter variabel Y_ijijk ---
-
-   
-## ---                      ---
-  
 ## --- objective function ---
 
 prob += delta
@@ -80,3 +79,6 @@ for i in jobs:
 for i in jobs:
     prob += lpSum(S[(i,j,k)] + data[(i,j,k)] for k in overview[i][1]) == Comp[i]
   
+#8
+for r in prec:
+    prob += L*preced[r] + (C[r[0]] - C[r[1]]) <= 2*L 
