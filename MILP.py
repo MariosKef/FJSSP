@@ -20,7 +20,8 @@ d is a list of job due dates
 from pulp import *
 import numpy as np
 
-
+L = 10**12
+d = [1000]*10
 
 jobs = range(1,len(overview)+1)
 
@@ -33,15 +34,15 @@ prob = LpProblem("FJSSP", LpMinimize)
 
 routing = LpVariable.dicts('routing', (i for i in data.keys()),0,1,LpBinary)
 
-preced = LpVariable.dicts('different-job precedence', (i for i in prec),0,1,LpBinary)
+preced = LpVariable.dicts('different job precedence', (i for i in prec),0, 1, LpBinary)
 
-delta = LpVariable("delta",None,None,LpContinuous)  # delta --> to be minimized
+delta = LpVariable("delta",None,None, LpContinuous)  # delta --> to be minimized
 
-S = LpVariable.dicts("Starting Times",0,None,LpInteger) 
+S = LpVariable.dicts("Starting Times",(i for i in data.keys()), 0,None,LpContinuous) 
 
-C = LpVariable.dicts("Completion time of process",0,None,LpInteger)
+C = LpVariable.dicts("Completion time of process",(i for i in data.keys()),0,None,LpContinuous)
 
-Comp = LpVariable.dicts("Job completion times",0,None,LpInteger)
+Comp = LpVariable.dicts("Job completion times",range(1,len(overview)+1), 0,None,LpContinuous)
 
 ## --- objective function ---
 
@@ -49,38 +50,38 @@ prob += delta
 
 ## --- constraints ---
 
-#1  
+# new constraint  
 for i in jobs:
-    prob += Comp[i] - d[i] <= delta 
+    prob += Comp[i] - d[i-1] <= delta 
 
-#2
+
+# each machine is assigned only one operation
 for i in jobs:
-    for j in overview[i][0]: # operations of job i
-        prob += lpSum(routing[(i,j,k)] for k in overview[i][1]) == 1
+    for j in overview[i-1][0]: # operations of job i
+        prob += lpSum(routing[(i,j,k)] for k in overview[i-1][1]) == 1
         
-#3
-for i in jobs:
-    for j in overview[i][0]: # operations of job i
-        for k in overview[i][1]: # machines 
-            prob += S[(i,j,k)]+C[(i,j,k)] <= routing[(i,j,k)]*L
 
-#4
-for i in jobs:
-    for j in overview[i][0]: # operations of job i
-        for k in overview[i][1]: # machines
-            prob += C[(i,j,k)] >= S[(i,j,k)] + data[(i,j,k)] - (1 - routing[(i,j,k)])
-#5
+# if an operation is not assigned to a machine S and C for that operation are set to 0
+for key in data.keys():
+    prob += routing[key]*L >= S[key] + C[key] 
 
 
-#6
-for i in jobs:
-    for j in overview[i][0]: # operations of job i
-        prob += lpSum(S[(i,j,k)] for k in overview[i][1]) >= lpSum(C[i][j-1][k] for k in overview[i][1])
+# completion time of operation
+for key in data.keys():
+    prob += C[key] >= S[key] + data[key] - (1 - routing[key]) * L
         
-#7
+
+# operation precedence
 for i in jobs:
-    prob += lpSum(S[(i,j,k)] + data[(i,j,k)] for k in overview[i][1]) == Comp[i]
+    for j in overview[i-1][0]: # operations of job i
+        if j > 1:
+            prob += lpSum(S[(i,j,k)] for k in overview[i-1][1]) >= lpSum(C[(i,j-1,k)] for k in overview[i-1][1])
+        
+# Compeletion time of job i definition
+for i in jobs:
+    j = overview[i-1][0][-1]
+    prob +=  Comp[i] == lpSum(C[(i,j,k)] for k in overview[i-1][1])  
   
-#8
+# different-job precedence on same machine, condition
 for r in prec:
     prob += L*preced[r] + (C[r[0]] - C[r[1]]) <= 2*L 
