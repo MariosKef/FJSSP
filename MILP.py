@@ -20,7 +20,7 @@ d is a list of job due dates
 from pulp import *
 import numpy as np
 
-L = 10**12
+L = 10**9
 d = [1000]*10
 
 jobs = range(1,len(overview)+1)
@@ -58,7 +58,8 @@ for i in jobs:
 # each machine is assigned only one operation
 for i in jobs:
     for j in overview[i-1][0]: # operations of job i
-        prob += lpSum(routing[(i,j,k)] for k in overview[i-1][1]) == 1
+        prob += lpSum(routing[(i,j,k)] for k in avail_machines[i-1][j-1]) == 1
+
         
 
 # if an operation is not assigned to a machine S and C for that operation are set to 0
@@ -75,13 +76,20 @@ for key in data.keys():
 for i in jobs:
     for j in overview[i-1][0]: # operations of job i
         if j > 1:
-            prob += lpSum(S[(i,j,k)] for k in overview[i-1][1]) >= lpSum(C[(i,j-1,k)] for k in overview[i-1][1])
+          prob += lpSum(S[(i,j,k)] for k in avail_machines[i-1][j-1]) >= lpSum(C[(i,j-1,k)] for k in avail_machines[i-1][j-2])
         
 # Compeletion time of job i definition
 for i in jobs:
     j = overview[i-1][0][-1]
-    prob +=  Comp[i] == lpSum(C[(i,j,k)] for k in overview[i-1][1])  
+    prob +=  Comp[i] == lpSum(C[(i,j,k)] for k in avail_machines[i-1][j-1])  
   
 # different-job precedence on same machine, condition
+#for r in prec:
+#    prob += L*preced[r] + (C[r[0]] - S[r[1]]) <= L
+
+#k = 0    
 for r in prec:
-    prob += L*preced[r] + (C[r[0]] - C[r[1]]) <= 2*L 
+    prob += S[r[1]] >= C[r[0]] - (1 - preced[r])*L
+for r in prec:
+    prob += S[r[0]] >= C[r[1]] - preced[r]*L
+
