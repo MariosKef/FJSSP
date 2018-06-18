@@ -86,12 +86,11 @@ for i in jobs:
     prob +=  Comp[i] >= lpSum(C[(i,j,k)] for k in avail_machines[i-1][j-1])  
   
 # different-job precedence on same machine, condition
-for r in prec:
-    prob += L*preced[r] + (C[r[0]] - S[r[1]]) <= 2*L
+#for r in prec:
+#    prob += L*preced[r] + (C[r[0]] - S[r[1]]) <= 2*L
 
 #k = 0    
-#for r in prec:
-#    prob += S[r[1]] >= C[r[0]] - (1 - preced[r])*L
-#for r in prec:
-#    prob += S[r[0]] >= C[r[1]] - preced[r]*L
-
+for r in prec:
+    prob += S[r[1]] >= C[r[0]] - (1 - preced[r])*L
+for r in prec:
+    prob += S[r[0]] >= C[r[1]] - preced[r]*L
